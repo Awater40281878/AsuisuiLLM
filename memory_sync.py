@@ -28,10 +28,18 @@ WORKSPACE_SLUG = os.environ.get("ASUISUI_WORKSPACE", "asuisui-ai")
 IDLE_SECONDS = int(os.environ.get("ASUISUI_MEMORY_IDLE_SECONDS", "90"))
 POLL_SECONDS = int(os.environ.get("ASUISUI_MEMORY_POLL_SECONDS", "20"))
 STATE_FILE = DATA / "memory-sync-state.json"
+LOG_FILE = DATA / "memory-sync.log"
 MEMORY_FILE = ROOT / "memory" / "conversation-memory.md"
 SECRET_PATTERN = re.compile(
     r"(?i)(api[_ -]?key|access[_ -]?token|password|passwd|secret|private[_ -]?key|bearer\s+[\w.-]+)"
 )
+
+
+def log(message: str) -> None:
+    DATA.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now().astimezone().isoformat(timespec="seconds")
+    with LOG_FILE.open("a", encoding="utf-8") as stream:
+        stream.write(f"{stamp} {message}\n")
 
 
 def read_state() -> dict:
@@ -174,7 +182,7 @@ def process_thread(thread: dict, state: dict) -> bool:
         sync_git()
     state["threads"][key] = int(thread["latest_id"])
     write_state(state)
-    print(f"對話 {key} 已檢查；新增記憶 {int(changed)} 項。")
+    log(f"對話 {key} 已檢查；記憶檔有變更：{changed}。")
     return changed
 
 
@@ -184,13 +192,13 @@ def run_once() -> None:
         try:
             process_thread(thread, state)
         except (OSError, ValueError, KeyError, sqlite3.Error, subprocess.CalledProcessError, urllib.error.URLError) as error:
-            print(f"記憶同步暫停，稍後重試：{error}", file=sys.stderr)
+            log(f"記憶同步暫停，稍後重試：{error}")
 
 
 def main() -> None:
     watch = "--watch" in sys.argv[1:]
     if watch:
-        print(f"監看 AnythingLLM 工作區 {WORKSPACE_SLUG}；閒置 {IDLE_SECONDS} 秒後整理記憶。")
+        log(f"開始監看 AnythingLLM 工作區 {WORKSPACE_SLUG}；閒置 {IDLE_SECONDS} 秒後整理記憶。")
         while True:
             run_once()
             time.sleep(POLL_SECONDS)
