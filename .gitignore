@@ -1,0 +1,21 @@
+# Local runtime data and private content
+.env
+.env.*
+!.env.example
+data/
+models/
+recordings/
+uploads/
+*.sqlite
+*.sqlite3
+*.db
+*.gguf
+*.wav
+*.mp3
+*.log
+__pycache__/
+.venv/
+venv/
+node_modules/
+dist/
+build/
