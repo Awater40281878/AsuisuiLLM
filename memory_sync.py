@@ -155,9 +155,13 @@ def update_memory(new_items: list[str], thread_name: str) -> bool:
 
 
 def git(*args: str, check: bool = True) -> subprocess.CompletedProcess:
+    environment = os.environ.copy()
+    environment["GIT_TERMINAL_PROMPT"] = "0"
+    environment["GCM_INTERACTIVE"] = "false"
+    environment["GCM_GUI_PROMPT"] = "false"
     return subprocess.run(
         ["git", *args], cwd=ROOT, text=True, encoding="utf-8",
-        errors="replace", capture_output=True, check=check,
+        errors="replace", capture_output=True, check=check, env=environment,
     )
 
 
