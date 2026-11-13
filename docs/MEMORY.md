@@ -22,6 +22,6 @@
 
 ## AnythingLLM 自動同步
 
-`memory_sync.py --watch` 以唯讀方式監看 AnythingLLM Desktop 的本機 SQLite 對話資料庫。對話閒置 90 秒後，用本機 Ollama 模型整理最近新增對話；只保留穩定稱呼、偏好、長期目標、持續專案與工作方式，略過閒聊和敏感資料。新記憶加入 `memory/conversation-memory.md`，建立本機 Git 提交並推送 `origin/main`。無新記憶時只更新本機處理位置，不產生空提交。若 Ollama 或網路暫時不可用，保留變更並在下一輪重試。
+`memory_sync.py --watch` 以唯讀方式監看 AnythingLLM Desktop 的本機 SQLite 對話資料庫。對話閒置 90 秒後，用本機 Ollama 模型整理最近新增對話；只保留穩定稱呼、偏好、長期目標、持續專案與工作方式，略過閒聊、敏感資料與系統提示詞記錄。新記憶加入 `memory/conversation-memory.md` 並建立本機 Git 提交；處理進度先寫入狀態檔，再嘗試推送 `origin/main`。推送失敗不會重複整理同一段對話，並於 5 分鐘後重試。Git 執行檔固定使用可用的系統安裝版本，登入提示保持關閉。
 
 預設監看 `asuisui-ai` 工作區、使用 `qwen3:8b-q4_K_M`，每 20 秒檢查一次。可用環境變數 `ANYTHINGLLM_DB`、`ASUISUI_WORKSPACE`、`ASUISUI_MEMORY_MODEL`、`ASUISUI_MEMORY_IDLE_SECONDS`、`ASUISUI_MEMORY_POLL_SECONDS` 調整。

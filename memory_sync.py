@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
 import sqlite3
 import subprocess
 import sys
@@ -33,6 +34,21 @@ MEMORY_FILE = ROOT / "memory" / "conversation-memory.md"
 SECRET_PATTERN = re.compile(
     r"(?i)(api[_ -]?key|access[_ -]?token|password|passwd|secret|private[_ -]?key|bearer\s+[\w.-]+)"
 )
+SYSTEM_PROMPT_PREFIX = "你是 Asuisui 的本機女性助理，名字是 Asuisui AI。"
+SYSTEM_PROMPT_MARKERS = ("這是明確的角色設定：", "使用者的名字是 Asuisui。")
+
+
+def resolve_git_executable() -> str:
+    configured = os.environ.get("ASUISUI_GIT_EXECUTABLE")
+    if configured and Path(configured).is_file():
+        return configured
+    preferred = Path(r"C:\Program Files\Git\cmd\git.exe")
+    if preferred.is_file():
+        return str(preferred)
+    return shutil.which("git") or "git"
+
+
+GIT_EXECUTABLE = resolve_git_executable()
 
 
 def log(message: str) -> None:
@@ -137,6 +153,13 @@ def extract_memories(chats: list[tuple]) -> list[str]:
     ]
 
 
+def is_system_prompt_record(prompt: str) -> bool:
+    text = prompt.strip()
+    return text.startswith(SYSTEM_PROMPT_PREFIX) and all(
+        marker in text for marker in SYSTEM_PROMPT_MARKERS
+    )
+
+
 def update_memory(new_items: list[str], thread_name: str) -> bool:
     if not new_items:
         return False
@@ -159,18 +182,55 @@ def git(*args: str, check: bool = True) -> subprocess.CompletedProcess:
     environment["GIT_TERMINAL_PROMPT"] = "0"
     environment["GCM_INTERACTIVE"] = "false"
     environment["GCM_GUI_PROMPT"] = "false"
+    options = {"creationflags": subprocess.CREATE_NO_WINDOW} if os.name == "nt" else {}
     return subprocess.run(
-        ["git", *args], cwd=ROOT, text=True, encoding="utf-8",
-        errors="replace", capture_output=True, check=check, env=environment,
+        [GIT_EXECUTABLE, *args], cwd=ROOT, text=True, encoding="utf-8",
+        errors="replace", capture_output=True, check=check, env=environment, **options,
     )
 
 
-def sync_git() -> None:
-    git("add", str(MEMORY_FILE.relative_to(ROOT)))
-    changed = git("diff", "--cached", "--quiet", check=False).returncode != 0
+def commit_local_memory() -> bool:
+    relative_memory = str(MEMORY_FILE.relative_to(ROOT))
+    git("add", "--", relative_memory)
+    changed = git("diff", "--cached", "--quiet", "--", relative_memory, check=False).returncode != 0
     if changed:
-        git("commit", "-m", "Update local conversation memory")
-    git("push", "origin", "main")
+        git("commit", "-m", "Update local conversation memory", "--", relative_memory)
+    return changed
+
+
+def finish_pending_local_commit(state: dict) -> None:
+    pending = state.get("pending_local_commit")
+    if not pending:
+        return
+    committed = commit_local_memory()
+    key = str(pending["thread_id"])
+    latest_id = int(pending["latest_id"])
+    state.setdefault("threads", {})[key] = max(
+        int(state.setdefault("threads", {}).get(key, 0)), latest_id
+    )
+    state.pop("pending_local_commit", None)
+    if committed:
+        state["push_pending"] = True
+        state["push_retry_after"] = 0
+    write_state(state)
+    log(f"對話 {key} 的本機記憶已提交；進度已保存。")
+
+
+def push_pending_memory(state: dict) -> None:
+    if not state.get("push_pending") or time.time() < float(state.get("push_retry_after", 0)):
+        return
+    try:
+        git("push", "origin", "main")
+    except (OSError, subprocess.CalledProcessError) as error:
+        state["push_pending"] = True
+        state["push_retry_after"] = time.time() + 300
+        write_state(state)
+        log(f"本機記憶已保存；遠端推送失敗，5 分鐘後重試：{error}")
+        return
+    state["push_pending"] = False
+    state["push_retry_after"] = 0
+    write_state(state)
+    log("本機記憶已推送至 origin/main。")
 
 
 def process_thread(thread: dict, state: dict) -> bool:
@@ -179,30 +239,44 @@ def process_thread(thread: dict, state: dict) -> bool:
     new_chats = [row for row in thread["chats"] if row[0] > previous_id]
     if not new_chats:
         return False
-    memories = extract_memories(new_chats)
+    conversation_chats = [row for row in new_chats if not is_system_prompt_record(row[1] or "")]
+    skipped = len(new_chats) - len(conversation_chats)
+    memories = extract_memories(conversation_chats) if conversation_chats else []
     changed = update_memory(memories, thread["name"] or f"對話 {key}")
-    if memories:
-        # Also retries a prior commit whose push failed.
-        sync_git()
-    state["threads"][key] = int(thread["latest_id"])
-    write_state(state)
-    log(f"對話 {key} 已檢查；記憶檔有變更：{changed}。")
+    if changed:
+        state["pending_local_commit"] = {
+            "thread_id": key,
+            "latest_id": int(thread["latest_id"]),
+        }
+        write_state(state)
+        finish_pending_local_commit(state)
+    else:
+        state.setdefault("threads", {})[key] = int(thread["latest_id"])
+        write_state(state)
+        log(f"對話 {key} 已檢查；沒有新增長期記憶。略過系統提示詞記錄：{skipped}。")
     return changed
 
 
 def run_once() -> None:
     state = read_state()
+    try:
+        finish_pending_local_commit(state)
+    except (OSError, ValueError, KeyError, sqlite3.Error, subprocess.CalledProcessError) as error:
+        log(f"本機記憶提交暫停，稍後重試：{error}")
+        return
     for thread in idle_threads():
         try:
             process_thread(thread, state)
         except (OSError, ValueError, KeyError, sqlite3.Error, subprocess.CalledProcessError, urllib.error.URLError) as error:
             log(f"記憶同步暫停，稍後重試：{error}")
+    push_pending_memory(state)
 
 
 def main() -> None:
     watch = "--watch" in sys.argv[1:]
     if watch:
         log(f"開始監看 AnythingLLM 工作區 {WORKSPACE_SLUG}；閒置 {IDLE_SECONDS} 秒後整理記憶。")
+        log(f"Git 執行檔：{GIT_EXECUTABLE}")
         while True:
             run_once()
             time.sleep(POLL_SECONDS)
