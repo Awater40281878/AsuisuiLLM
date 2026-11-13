@@ -19,3 +19,9 @@
 ## Git 邊界
 
 只追蹤精簡記憶檔、格式版本和必要稽核中繼資料。忽略 SQLite、向量資料庫、快取、模型、錄音、附件、日誌中的私人內容、環境變數檔與憑證。Git 遠端推送單獨啟用，並應只同步經允許清單篩選的記憶內容；本機提交不得暗中觸發推送。
+
+## AnythingLLM 自動同步
+
+`memory_sync.py --watch` 以唯讀方式監看 AnythingLLM Desktop 的本機 SQLite 對話資料庫。對話閒置 90 秒後，用本機 Ollama 模型整理最近新增對話；只保留穩定稱呼、偏好、長期目標、持續專案與工作方式，略過閒聊和敏感資料。新記憶加入 `memory/conversation-memory.md`，建立本機 Git 提交並推送 `origin/main`。無新記憶時只更新本機處理位置，不產生空提交。若 Ollama 或網路暫時不可用，保留變更並在下一輪重試。
+
+預設監看 `asuisui-ai` 工作區、使用 `qwen3:8b-q4_K_M`，每 20 秒檢查一次。可用環境變數 `ANYTHINGLLM_DB`、`ASUISUI_WORKSPACE`、`ASUISUI_MEMORY_MODEL`、`ASUISUI_MEMORY_IDLE_SECONDS`、`ASUISUI_MEMORY_POLL_SECONDS` 調整。

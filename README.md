@@ -46,6 +46,7 @@ python app.py search "自我介紹"
 - [本機開發環境說明](docs/DEVELOPMENT.md)
 - [記憶與版本管理設計](docs/MEMORY.md)
 - [第一份使用者記憶](memory/01-user-profile.md)
+- [本機自動記憶同步](docs/MEMORY.md)
 
 ## 技術選型原則
 
