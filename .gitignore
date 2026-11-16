@@ -1,21 +1,12 @@
-# Local runtime data and private content
-.env
-.env.*
-!.env.example
-data/
-models/
-recordings/
-uploads/
-*.sqlite
-*.sqlite3
-*.db
-*.gguf
-*.wav
-*.mp3
-*.log
-__pycache__/
-.venv/
-venv/
-node_modules/
-dist/
-build/
+### Windows
+# Windows thumbnail cache files
+Thumbs.db
+
+# Folder config file
+[Dd]esktop.ini
+
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
+
+# Windows shortcuts
+*.lnk

@@ -1,0 +1,14 @@
+C:\Users\Asuisui\DesktopAI\bin\Debug\net9.0\DesktopAI.exe
+C:\Users\Asuisui\DesktopAI\bin\Debug\net9.0\DesktopAI.deps.json
+C:\Users\Asuisui\DesktopAI\bin\Debug\net9.0\DesktopAI.runtimeconfig.json
+C:\Users\Asuisui\DesktopAI\bin\Debug\net9.0\DesktopAI.dll
+C:\Users\Asuisui\DesktopAI\bin\Debug\net9.0\DesktopAI.pdb
+C:\Users\Asuisui\DesktopAI\obj\Debug\net9.0\DesktopAI.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Asuisui\DesktopAI\obj\Debug\net9.0\DesktopAI.AssemblyInfoInputs.cache
+C:\Users\Asuisui\DesktopAI\obj\Debug\net9.0\DesktopAI.AssemblyInfo.cs
+C:\Users\Asuisui\DesktopAI\obj\Debug\net9.0\DesktopAI.csproj.CoreCompileInputs.cache
+C:\Users\Asuisui\DesktopAI\obj\Debug\net9.0\DesktopAI.dll
+C:\Users\Asuisui\DesktopAI\obj\Debug\net9.0\refint\DesktopAI.dll
+C:\Users\Asuisui\DesktopAI\obj\Debug\net9.0\DesktopAI.pdb
+C:\Users\Asuisui\DesktopAI\obj\Debug\net9.0\DesktopAI.genruntimeconfig.cache
+C:\Users\Asuisui\DesktopAI\obj\Debug\net9.0\ref\DesktopAI.dll
