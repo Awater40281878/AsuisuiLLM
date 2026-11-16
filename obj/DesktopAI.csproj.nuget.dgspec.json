@@ -50,9 +50,17 @@
         "net9.0": {
           "targetAlias": "net9.0",
           "dependencies": {
+            "HtmlAgilityPack": {
+              "target": "Package",
+              "version": "[1.13.1, )"
+            },
             "Microsoft.Data.Sqlite": {
               "target": "Package",
               "version": "[9.0.21, )"
+            },
+            "Microsoft.Playwright": {
+              "target": "Package",
+              "version": "[1.64.1, )"
             }
           },
           "imports": [

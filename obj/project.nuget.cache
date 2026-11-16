@@ -1,16 +1,23 @@
 {
   "version": 2,
-  "dgSpecHash": "J3QDXUK0BcQ=",
+  "dgSpecHash": "kaH6UsSaqkw=",
   "success": true,
   "projectFilePath": "D:\\Git\\Asuisui\\AsuisuiLLM\\DesktopAI.csproj",
   "expectedPackageFiles": [
+    "C:\\Users\\Asuisui\\.nuget\\packages\\htmlagilitypack\\1.13.1\\htmlagilitypack.1.13.1.nupkg.sha512",
+    "C:\\Users\\Asuisui\\.nuget\\packages\\microsoft.bcl.asyncinterfaces\\6.0.0\\microsoft.bcl.asyncinterfaces.6.0.0.nupkg.sha512",
     "C:\\Users\\Asuisui\\.nuget\\packages\\microsoft.data.sqlite\\9.0.21\\microsoft.data.sqlite.9.0.21.nupkg.sha512",
     "C:\\Users\\Asuisui\\.nuget\\packages\\microsoft.data.sqlite.core\\9.0.21\\microsoft.data.sqlite.core.9.0.21.nupkg.sha512",
+    "C:\\Users\\Asuisui\\.nuget\\packages\\microsoft.playwright\\1.64.1\\microsoft.playwright.1.64.1.nupkg.sha512",
     "C:\\Users\\Asuisui\\.nuget\\packages\\sqlitepclraw.bundle_e_sqlite3\\2.1.13\\sqlitepclraw.bundle_e_sqlite3.2.1.13.nupkg.sha512",
     "C:\\Users\\Asuisui\\.nuget\\packages\\sqlitepclraw.core\\2.1.13\\sqlitepclraw.core.2.1.13.nupkg.sha512",
     "C:\\Users\\Asuisui\\.nuget\\packages\\sqlitepclraw.lib.e_sqlite3\\2.1.13\\sqlitepclraw.lib.e_sqlite3.2.1.13.nupkg.sha512",
     "C:\\Users\\Asuisui\\.nuget\\packages\\sqlitepclraw.provider.e_sqlite3\\2.1.13\\sqlitepclraw.provider.e_sqlite3.2.1.13.nupkg.sha512",
-    "C:\\Users\\Asuisui\\.nuget\\packages\\system.memory\\4.5.3\\system.memory.4.5.3.nupkg.sha512"
+    "C:\\Users\\Asuisui\\.nuget\\packages\\system.componentmodel.annotations\\5.0.0\\system.componentmodel.annotations.5.0.0.nupkg.sha512",
+    "C:\\Users\\Asuisui\\.nuget\\packages\\system.memory\\4.5.3\\system.memory.4.5.3.nupkg.sha512",
+    "C:\\Users\\Asuisui\\.nuget\\packages\\system.runtime.compilerservices.unsafe\\6.0.0\\system.runtime.compilerservices.unsafe.6.0.0.nupkg.sha512",
+    "C:\\Users\\Asuisui\\.nuget\\packages\\system.text.encodings.web\\6.0.0\\system.text.encodings.web.6.0.0.nupkg.sha512",
+    "C:\\Users\\Asuisui\\.nuget\\packages\\system.text.json\\6.0.10\\system.text.json.6.0.10.nupkg.sha512"
   ],
   "logs": []
 }
