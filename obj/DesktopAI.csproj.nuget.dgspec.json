@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Asuisui\\DesktopAI\\DesktopAI.csproj": {}
+    "D:\\Git\\Asuisui\\AsuisuiLLM\\DesktopAI.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Asuisui\\DesktopAI\\DesktopAI.csproj": {
+    "D:\\Git\\Asuisui\\AsuisuiLLM\\DesktopAI.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Asuisui\\DesktopAI\\DesktopAI.csproj",
+        "projectUniqueName": "D:\\Git\\Asuisui\\AsuisuiLLM\\DesktopAI.csproj",
         "projectName": "DesktopAI",
-        "projectPath": "C:\\Users\\Asuisui\\DesktopAI\\DesktopAI.csproj",
+        "projectPath": "D:\\Git\\Asuisui\\AsuisuiLLM\\DesktopAI.csproj",
         "packagesPath": "C:\\Users\\Asuisui\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Asuisui\\DesktopAI\\obj\\",
+        "outputPath": "D:\\Git\\Asuisui\\AsuisuiLLM\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -49,6 +49,12 @@
       "frameworks": {
         "net9.0": {
           "targetAlias": "net9.0",
+          "dependencies": {
+            "Microsoft.Data.Sqlite": {
+              "target": "Package",
+              "version": "[9.0.21, )"
+            }
+          },
           "imports": [
             "net461",
             "net462",

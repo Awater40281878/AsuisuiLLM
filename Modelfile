@@ -1,0 +1,18 @@
+
+FROM qwen3:4b
+
+TEMPLATE """{{- if .System }}<|im_start|>system
+{{ .System }}<|im_end|>
+{{- end }}
+{{- range .Messages }}
+<|im_start|>{{ .Role }}
+{{ .Content }}<|im_end|>
+{{- end }}
+<|im_start|>assistant
+<think></think>
+"""
+
+PARAMETER temperature 0.3
+PARAMETER num_predict 256
+PARAMETER stop <|im_end|>
+PARAMETER stop <|im_start|>

@@ -1,8 +1,16 @@
 {
   "version": 2,
-  "dgSpecHash": "5kGdWZtSKLw=",
+  "dgSpecHash": "J3QDXUK0BcQ=",
   "success": true,
-  "projectFilePath": "C:\\Users\\Asuisui\\DesktopAI\\DesktopAI.csproj",
-  "expectedPackageFiles": [],
+  "projectFilePath": "D:\\Git\\Asuisui\\AsuisuiLLM\\DesktopAI.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Asuisui\\.nuget\\packages\\microsoft.data.sqlite\\9.0.21\\microsoft.data.sqlite.9.0.21.nupkg.sha512",
+    "C:\\Users\\Asuisui\\.nuget\\packages\\microsoft.data.sqlite.core\\9.0.21\\microsoft.data.sqlite.core.9.0.21.nupkg.sha512",
+    "C:\\Users\\Asuisui\\.nuget\\packages\\sqlitepclraw.bundle_e_sqlite3\\2.1.13\\sqlitepclraw.bundle_e_sqlite3.2.1.13.nupkg.sha512",
+    "C:\\Users\\Asuisui\\.nuget\\packages\\sqlitepclraw.core\\2.1.13\\sqlitepclraw.core.2.1.13.nupkg.sha512",
+    "C:\\Users\\Asuisui\\.nuget\\packages\\sqlitepclraw.lib.e_sqlite3\\2.1.13\\sqlitepclraw.lib.e_sqlite3.2.1.13.nupkg.sha512",
+    "C:\\Users\\Asuisui\\.nuget\\packages\\sqlitepclraw.provider.e_sqlite3\\2.1.13\\sqlitepclraw.provider.e_sqlite3.2.1.13.nupkg.sha512",
+    "C:\\Users\\Asuisui\\.nuget\\packages\\system.memory\\4.5.3\\system.memory.4.5.3.nupkg.sha512"
+  ],
   "logs": []
 }
