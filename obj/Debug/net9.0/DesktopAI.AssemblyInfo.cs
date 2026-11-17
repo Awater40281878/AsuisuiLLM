@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("DesktopAI")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+eb748cb60df3ed7bc36820dbd26e3d08d385d728")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b549e0b56d6c08725b34c08f85480e0609357275")]
 [assembly: System.Reflection.AssemblyProductAttribute("DesktopAI")]
 [assembly: System.Reflection.AssemblyTitleAttribute("DesktopAI")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
