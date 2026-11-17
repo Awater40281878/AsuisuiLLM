@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
@@ -38,6 +38,8 @@ string? activeTopic = null;
 string? lastStandaloneQuestion = null;
 string? lastSearchIntent = null;
 string searchModifiers = "";
+KnowledgeMemory? pendingKnowledge = null;
+string? pendingKnowledgeSource = null;
 int followupsRemaining = 0;
 
 Console.WriteLine("AI 已啟動！");
@@ -85,7 +87,25 @@ while (true)
 		catch (Exception ex) { Console.WriteLine($"讀取失敗：{ex.Message}"); }
 		continue;
 	}
-	if (input.Equals("/clearsearch", StringComparison.OrdinalIgnoreCase))
+		if (input.StartsWith("/confirmknowledge", StringComparison.OrdinalIgnoreCase))
+	{
+		if (pendingKnowledge is null) { Console.WriteLine("目前沒有待確認的知識候選。"); continue; }
+		if (input.Equals("/confirmknowledge", StringComparison.OrdinalIgnoreCase))
+		{
+			Console.WriteLine($"請確認提煉結果：{pendingKnowledge.Key}：{pendingKnowledge.Definition}；例子：{pendingKnowledge.Examples}；限制：{pendingKnowledge.Constraints}");
+			Console.WriteLine("確認請輸入 /confirmknowledge yes；取消輸入 /confirmknowledge no。");
+			continue;
+		}
+		if (input.EndsWith("yes", StringComparison.OrdinalIgnoreCase))
+		{
+			memory.SaveKnowledge(pendingKnowledge, pendingKnowledgeSource ?? "使用者糾正", "user_context");
+			Console.WriteLine("已將整理後的概念存入跨對話記憶。");
+		}
+		else Console.WriteLine("已取消這筆候選記憶。");
+		pendingKnowledge = null; pendingKnowledgeSource = null;
+		continue;
+	}
+if (input.Equals("/clearsearch", StringComparison.OrdinalIgnoreCase))
 	{
 		lastEvidence = null;
 		activeTopic = null;
@@ -109,7 +129,8 @@ while (true)
 	// 補充條件要繼承到原研究問題，不應重置為新問題。
 	if (userMessage.Contains("成人") || userMessage.Contains("瑟瑟") || userMessage.Contains("18+") || userMessage.Contains("NSFW", StringComparison.OrdinalIgnoreCase))
 		searchModifiers = "NSFW adult fan animation";
-	var plan = await PlanSearchAsync(client, userMessage, activeTopic, lastSearchIntent, messages, explicitSearch);
+	var relevantKnowledge = memory.FindRelevant(userMessage);
+	var plan = await PlanSearchAsync(client, userMessage, activeTopic, lastSearchIntent, messages, explicitSearch, relevantKnowledge);
 	if (!string.IsNullOrWhiteSpace(searchModifiers) && plan.Search)
 	{
 		string baseQuery = plan.Query;
@@ -226,6 +247,7 @@ while (true)
 			? "目前沒有已儲存的長期記憶。"
 			: "以下是使用者的長期記憶，回答相關問題時請參考：\n" + savedMemories;
 		var requestMessages = new List<ChatMessage> { messages[0], new("system", memoryPrompt) };
+		if (!string.IsNullOrWhiteSpace(relevantKnowledge)) requestMessages.Add(new ChatMessage("system", "相關概念記憶（來源與範圍需遵守）：\n" + relevantKnowledge));
 		// 搜尋回答不要混入舊的 assistant 猜測（例如先前錯誤的「水屬性」）。
 		if (isSearch)
 			requestMessages.Add(new ChatMessage("user", $"目前問題：{userMessage}\n完整搜尋意圖：{searchQuery}"));
@@ -274,6 +296,15 @@ while (true)
 				Console.WriteLine($"{i + 1}. {searchResults[i].Title}\n   {searchResults[i].Url}");
 		}
 		messages.Add(new ChatMessage("assistant", answer));
+		if (IsCorrection(userMessage) && !userMessage.StartsWith("/"))
+		{
+			var candidate = await ExtractKnowledgeCandidateAsync(client, userMessage, messages);
+			if (candidate is not null)
+			{
+				pendingKnowledge = candidate; pendingKnowledgeSource = "對話中的糾正，尚待外部查證";
+				Console.WriteLine($"\n記憶候選（未寫入）：{candidate.Key}：{candidate.Definition}\n例子：{candidate.Examples}\n限制：{candidate.Constraints}\n將以 /confirmknowledge yes 確認保存；/confirmknowledge no 取消。");
+			}
+		}
 		if (!isSearch && followupsRemaining > 0) followupsRemaining--;
 	}
 	catch (Exception ex)
@@ -301,7 +332,7 @@ static string RemoveThinking(string content)
 
 // 先判斷「使用者真正想問什麼」，再決定是否搜尋。回傳 JSON，不讓模型直接回答問題。
 static async Task<SearchPlan> PlanSearchAsync(HttpClient client, string input, string? topic,
-	string? lastIntent, List<ChatMessage> history, bool forceSearch)
+	string? lastIntent, List<ChatMessage> history, bool forceSearch, string relevantKnowledge)
 {
 	// 「用英文查」是語言切換，不是新的搜尋主題；一定要繼承上次完整的研究目標。
 	bool english = new[] { "英文查", "英文搜尋", "用英文", "英語搜尋", "search in english", "english search" }
@@ -340,7 +371,7 @@ static async Task<SearchPlan> PlanSearchAsync(HttpClient client, string input, s
 				new { role = "user", content =
 					$"上一輪主題：{topic ?? "無"}\n上一輪完整研究目標：{lastIntent ?? "無"}\n" +
 					$"搜尋語言要求：{(english ? "英文" : japanese ? "日文" : "未指定")}\n" +
-					$"最近使用者問題：\n{recent}\n最新問題：{input}" }
+					$"最近使用者問題：\n{recent}\n最新問題：{input}\n已驗證或使用者語境知識：{relevantKnowledge}" }
 			},
 			stream = false,
 			think = false,
@@ -414,6 +445,25 @@ static async Task<SearchPlan> PlanSearchAsync(HttpClient client, string input, s
 	}
 }
 
+static bool IsCorrection(string input) => new[] { "不對", "不是", "我指的是", "我說的是", "你理解錯", "那不叫", "應該是", "更正" }.Any(x => input.Contains(x, StringComparison.OrdinalIgnoreCase));
+
+static async Task<KnowledgeMemory?> ExtractKnowledgeCandidateAsync(HttpClient client, string input, List<ChatMessage> history)
+{
+	try
+	{
+		var request = new { model = "qwen3:4b-instruct", stream = false, think = false, format = "json", messages = new object[] {
+			new { role = "system", content = "從使用者對 AI 的糾正中，只提煉可跨對話重用的概念或偏好，輸出 JSON：{key,definition,examples,constraints,scope,confidence,reusable}。不得照抄原話。純粹本輪任務修正要 reusable=false。資訊不足時設 false。scope 應是 user_context 或 general。此處只產生待查證候選，不能聲稱已驗證。" },
+			new { role = "user", content = string.Join("\n", history.TakeLast(4).Select(m => m.role + ": " + m.content)) + "\n最新糾正：" + input } }, options = new { temperature = 0.0, num_predict = 300, num_ctx = 3072 } };
+		using var response = await client.PostAsJsonAsync("http://localhost:11434/api/chat", request);
+		response.EnsureSuccessStatusCode();
+		using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+		using var parsed = JsonDocument.Parse(RemoveThinking(json.RootElement.GetProperty("message").GetProperty("content").GetString() ?? "{}"));
+		var root = parsed.RootElement;
+		if (!root.TryGetProperty("reusable", out var reusable) || reusable.ValueKind != JsonValueKind.True) return null;
+		return new KnowledgeMemory(GetJsonString(root,"key"), GetJsonString(root,"definition"), GetJsonString(root,"examples"), GetJsonString(root,"constraints"), GetJsonString(root,"scope"), root.TryGetProperty("confidence",out var c) && c.TryGetDouble(out var n) ? n : 0);
+	}
+	catch (Exception ex) { Console.WriteLine($"知識候選整理失敗：{ex.Message}"); return null; }
+}
 static string GetJsonString(JsonElement root, string key) =>
 	root.TryGetProperty(key, out var value) && value.ValueKind == JsonValueKind.String
 		? (value.GetString() ?? "").Trim() : "";
