@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using HtmlAgilityPack;
 using Microsoft.Playwright;
 
-// 使用一般 Chrome 視窗模式，但要求 Chrome 啟動時最小化並移出螢幕可見範圍。
+// 使用獨立的背景 Chrome context 搜尋，不建立或操作使用者目前的視窗。
 public sealed class WebSearchService
 {
 	private const string SearchEndpoint = "https://duckduckgo.com/?q=";
@@ -55,7 +55,7 @@ public sealed class WebSearchService
 					throw new InvalidOperationException(
 						"搜尋頁面沒有可解析的結果，且未偵測到 CAPTCHA。可能是 DuckDuckGo 頁面結構改變。");
 
-				Console.WriteLine("DuckDuckGo 出現驗證頁，正在最小化的 Chrome 等待瀏覽器自動完成……");
+				Console.WriteLine("DuckDuckGo 出現驗證頁，背景 Chrome 等待自動完成……");
 				// 某些 JavaScript 驗證會自行跳轉。保留同一個 page / cookie 等待它完成。
 				results = await WaitForResultsAsync(page, maxResults,
 					TimeSpan.FromSeconds(18), cancellationToken);
@@ -72,7 +72,7 @@ public sealed class WebSearchService
 				if (IsNoResults(html)) return results;
 				if (IsChallenge(html, page.Url))
 					throw new InvalidOperationException(
-						"DuckDuckGo 仍要求人機驗證；最小化 Chrome 仍無法自動完成，已停止。");
+						"DuckDuckGo 仍要求人機驗證；背景 Chrome 無法自動完成，已停止且未影響使用者視窗。");
 				throw new InvalidOperationException("重試後仍無法解析 DuckDuckGo 搜尋結果。");
 			}
 		}

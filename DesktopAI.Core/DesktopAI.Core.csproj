@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <NuGetAudit>false</NuGetAudit>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\AsuisuiAssistantCore.cs" Link="AsuisuiAssistantCore.cs" />
+    <Compile Include="..\GoogleAiModeSearchService.cs" Link="GoogleAiModeSearchService.cs" />
+    <Compile Include="..\MemoryService.cs" Link="MemoryService.cs" />
+    <Compile Include="..\WebSearchService.cs" Link="WebSearchService.cs" />
+    <Compile Include="..\WebReaderService.cs" Link="WebReaderService.cs" />
+    <Compile Include="..\GoogleProfileSettings.cs" Link="GoogleProfileSettings.cs" />
+    <PackageReference Include="HtmlAgilityPack" Version="1.13.1" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.21" />
+    <PackageReference Include="Microsoft.Playwright" Version="1.64.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\google-ai-mode-extension\**\*" Link="google-ai-mode-extension\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\RPA\**\*" Link="RPA\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\Invoke-UiVisionChatGPT.ps1" Link="Invoke-UiVisionChatGPT.ps1" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

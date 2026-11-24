@@ -8,5 +8,22 @@ Thumbs.db
 # Recycle Bin used on file shares
 $RECYCLE.BIN/
 
+# Windowed app build output
+**/bin/
+**/obj/
+DesktopAI.Gui/bin/
+DesktopAI.Gui/obj/
+AsuisuiLLM-視窗版/
+AsuisuiLLM-視窗版-v2/
+AsuisuiLLM-視窗版-v3/
+AsuisuiLLM-視窗版-v4/
+AsuisuiLLM-視窗版-v5/
+AsuisuiLLM-視窗版-v6/
+AsuisuiLLM-視窗版-v7/
+verify-gui/
+verify-image/
+verify-*/
+google-ai-mode-extension*.zip
+
 # Windows shortcuts
 *.lnk
