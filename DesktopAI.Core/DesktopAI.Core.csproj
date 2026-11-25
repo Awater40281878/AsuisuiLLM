@@ -13,6 +13,7 @@
     <Compile Include="..\WebSearchService.cs" Link="WebSearchService.cs" />
     <Compile Include="..\WebReaderService.cs" Link="WebReaderService.cs" />
     <Compile Include="..\GoogleProfileSettings.cs" Link="GoogleProfileSettings.cs" />
+    <Compile Include="..\SearchPrioritySettings.cs" Link="SearchPrioritySettings.cs" />
     <PackageReference Include="HtmlAgilityPack" Version="1.13.1" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.21" />
     <PackageReference Include="Microsoft.Playwright" Version="1.64.1" />

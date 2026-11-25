@@ -78,9 +78,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 			})
 			.then(async job => {
 				if (job?.id === requestedJobId) {
-					const previous = await chrome.storage.local.get(["asuisuiManagedSearchTabId", "asuisuiManagedSearchJobId"]);
-					if (Number.isInteger(previous.asuisuiManagedSearchTabId) && previous.asuisuiManagedSearchTabId !== sender.tab.id)
-						await closeOwnedSearchTab(previous.asuisuiManagedSearchTabId, previous.asuisuiManagedSearchJobId);
+					// A new job must never be used as a reason to close the previous
+					// provider window. That window owns its own completion lifecycle;
+					// successful results close it only after the bridge accepts them.
 					await chrome.storage.local.set({ asuisuiManagedSearchTabId: sender.tab.id, asuisuiManagedSearchJobId: requestedJobId });
 				}
 				sendResponse(job);
@@ -100,6 +100,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 			body: JSON.stringify(message.payload)
 		})
 			.then(async response => {
+				// A tab is closed only after the desktop bridge accepts a completed,
+				// successful answer. Error/incomplete pages stay open for inspection.
 				if (response.ok && message.type === "result" && !message.payload?.error)
 					await closeOwnedSearchTab(sender.tab?.id, message.payload?.jobId);
 				sendResponse({ ok: response.ok });

@@ -24,7 +24,7 @@
     </Border>
     <Grid Grid.Row="4" Margin="0,12,0,0">
       <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-      <TextBox x:Name="InputBox" Grid.Column="0" MinHeight="65" Padding="10" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" KeyDown="Input_KeyDown" FontSize="15" Background="#252936" Foreground="#F1F3F8" CaretBrush="#F1F3F8" BorderBrush="#42495C"/>
+      <TextBox x:Name="InputBox" Grid.Column="0" MinHeight="65" Padding="10" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" PreviewKeyDown="Input_PreviewKeyDown" FontSize="15" Background="#252936" Foreground="#F1F3F8" CaretBrush="#F1F3F8" BorderBrush="#42495C"/>
       <Button x:Name="SendButton" Grid.Column="1" Content="送出" Click="Send_Click" MinWidth="75" Background="#5068C8" Foreground="White" BorderThickness="0"/>
       <Button x:Name="StopButton" Grid.Column="2" Content="停止" Click="Stop_Click" MinWidth="65"/>
     </Grid>

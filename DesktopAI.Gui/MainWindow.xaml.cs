@@ -98,7 +98,7 @@ public partial class MainWindow : Window
     }
 
     private async void Send_Click(object sender, RoutedEventArgs e) { string text = InputBox.Text; InputBox.Clear(); await SendAsync(text); }
-    private async void Input_KeyDown(object sender, KeyEventArgs e)
+    private async void Input_PreviewKeyDown(object sender, KeyEventArgs e)
     {
         if (e.Key != Key.Enter || Keyboard.Modifiers.HasFlag(ModifierKeys.Shift)) return;
         e.Handled = true;
@@ -113,7 +113,7 @@ public partial class MainWindow : Window
         selectingProfile = true;
         Append("\n選擇用於 Google AI 與 ChatGPT 的 Chrome 設定檔：\n" + string.Join("\n", profiles.Select((profile, index) => $"{index + 1}. {profile.Name}")) + "\n請在輸入框輸入編號。\n");
     }
-    private void Settings_Click(object sender, RoutedEventArgs e) => Append("顯示設定正在遷移到視窗版；目前可直接使用模式選擇與圖片預覽。\n");
+    private void Settings_Click(object sender, RoutedEventArgs e) => Append("\n搜尋來源優先順序：" + core.GetSearchPriority() + "\n可在輸入框直接設定，例如：/searchpriority ChatGpt,GoogleAi,Web\n可用項目：Web、GoogleAi、ChatGpt。每批補查只使用依優先順序第一個有結果的來源，不會同一批同時交叉搜尋 ChatGPT 與 Google AI；接著會讀取來源正文補資料。\n");
     private void ClearImage() { pendingImage = null; ImagePreview.Source = null; ImagePreviewPanel.Visibility = Visibility.Collapsed; }
     private void RemoveImage_Click(object sender, RoutedEventArgs e) => ClearImage();
 

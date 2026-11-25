@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Asuisui AI Web Bridge",
-	"version": "1.0.24",
+	"version": "1.0.28",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwfb6+zFRN2bpHBW091uuXREWXpAHyDQlf6YjsIWIJazTBBwnlWdvMKdAQ4gKW9s9+mePfi77eyPzh0ZxfDoyRfj7h7G1hb6+1io6LXO7158N7FxfPLEDS2xIWCBjugYy9C8w0R4PPdaz1pXJwJ9sKki9Ucd9TMPsfe+o3NfDYbOjCvG8BNV8+8baKuFqO/oA/T3454qjwKcWGwdVzbsVmPgBlFA+MuSFDCONFaMIYTbUHGwS7EBts8z4uuOL5hQMmWgDcatY5dZOwOTPQB6xqH8wQJjJAa27aKI0phdleo9kEhEGCRJMRooLmoGZxVqblaFvrRURR4zJR5roCCFsXQIDAQAB",
   "description": "Reads answers and citations from selected Google AI Mode and ChatGPT web tabs for AsuisuiLLM.",
   "permissions": ["storage", "tabs"],

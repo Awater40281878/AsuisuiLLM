@@ -110,8 +110,7 @@ function collectSources(root) {
 				seen.add(source.url);
 				return true;
 			} catch { return false; }
-		})
-		.slice(0, 10);
+		});
 }
 
 function answerAfterQuestion(text, query) {

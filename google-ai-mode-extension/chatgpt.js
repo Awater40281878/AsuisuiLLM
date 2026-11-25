@@ -119,8 +119,7 @@ function collectSources(root) {
 				seen.add(url.href);
 				return true;
 			} catch { return false; }
-		})
-		.slice(0, 12);
+		});
 }
 
 async function waitForComposer() {
@@ -186,7 +185,11 @@ async function waitForAnswer(job, previousCount) {
 	let previous = "";
 	let stableReads = 0;
 	let retriedAccountChange = false;
-	for (let i = 0; i < 150; i++) {
+	let sawGenerating = false;
+	// A valid ChatGPT answer can take longer than any fixed timeout. Keep the
+	// job and tab alive until generation has stopped and the answer is stable;
+	// the desktop bridge starts the next provider only after this reports result.
+	for (;;) {
 		await sleep(1000);
 		const pageText = document.body?.innerText || "";
 		if (/account.{0,20}changed|帳戶.{0,8}(已)?變更|重新傳送訊息/i.test(pageText) && !retriedAccountChange) {
@@ -206,29 +209,23 @@ async function waitForAnswer(job, previousCount) {
 		const messages = assistantMessages();
 		const latest = messages.at(-1);
 		const answer = (latest?.innerText || "").replace(/^(ChatGPT said|ChatGPT 說|ChatGPT说)\s*[:：]?\s*/i, "").trim();
-		const generating = !!document.querySelector('button[data-testid="stop-button"], button[aria-label*="Stop streaming"], button[aria-label*="停止產生"], button[aria-label*="停止生成"]');
-		const newReply = messages.length > previousCount && answer.length >= 30;
+		const generating = !!document.querySelector('button[data-testid="stop-button"], button[aria-label*="Stop"], button[aria-label*="停止"], button[title*="Stop"], button[title*="停止"]');
+		if (generating) sawGenerating = true;
+		const newReply = messages.length > previousCount && answer.length > 0;
 		if (newReply && !generating && answer === previous) stableReads++;
 		else stableReads = 0;
-		if (stableReads >= 5) {
-			diagnostic(job, `answer-captured:length=${answer.length};sources=${collectSources(latest).length}`);
+		// If streaming was observed, require a longer quiet period after it ends.
+		// For very fast replies with no observed stop button, require an even longer
+		// stable answer before reporting completion.
+		const completionReads = sawGenerating ? 12 : 20;
+		if (stableReads >= completionReads) {
+			diagnostic(job, `answer-completion-confirmed:stable=${stableReads}s;streamingObserved=${sawGenerating};length=${answer.length};sources=${collectSources(latest).length}`);
 			await report("result", { jobId: job.id, query: job.query, answer, sources: collectSources(latest) });
 			await chrome.storage.session.remove("asuisuiActiveJob");
 			return;
 		}
 		previous = answer;
 	}
-	const pageText = document.body?.innerText || "";
-	const notice = pageText.split(/\n+/).map(line => line.trim()).find(line =>
-		/account|changed|error|failed|重試|變更|錯誤|失敗|重新傳送/i.test(line)
-	)?.slice(0, 180);
-	diagnostic(job, `answer-timeout;notice=${notice || "none"}`);
-	await report("result", {
-		jobId: job.id,
-		query: job.query,
-		error: notice ? `ChatGPT 未回覆；頁面提示：${notice}` : "ChatGPT 未在 150 秒內產生穩定回答。"
-	});
-	await chrome.storage.session.remove("asuisuiActiveJob");
 }
 
 async function report(type, payload) {

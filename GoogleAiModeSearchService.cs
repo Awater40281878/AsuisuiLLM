@@ -14,6 +14,7 @@ public sealed class GoogleAiModeSearchService : IDisposable
 	private const string BridgeOrigin = "chrome-extension://lcocmombemlmdnaflofijmaohefbhfma";
 	private const string BridgeToken = "asuisui-ggo-bridge-v1-7f2f3fd64fcb45a1b313d33d0eccaf27";
 	private readonly object sync = new();
+	private readonly SemaphoreSlim searchJobLock = new(1, 1);
 	private readonly TcpListener bridge = new(IPAddress.Loopback, BridgePort);
 	private readonly JsonSerializerOptions jsonOptions = new(JsonSerializerDefaults.Web);
 	private Task? bridgeTask;
@@ -100,6 +101,15 @@ public sealed class GoogleAiModeSearchService : IDisposable
 	}
 
 	private async Task<GoogleAiModeResult> SearchAsync(string query, string provider, CancellationToken cancellationToken, string? imageBase64)
+	{
+		// The bridge has one active job slot. Serialize provider jobs so a second
+		// request cannot replace a ChatGPT job or trigger window cleanup mid-answer.
+		await searchJobLock.WaitAsync(cancellationToken);
+		try { return await SearchCoreAsync(query, provider, cancellationToken, imageBase64); }
+		finally { searchJobLock.Release(); }
+	}
+
+	private async Task<GoogleAiModeResult> SearchCoreAsync(string query, string provider, CancellationToken cancellationToken, string? imageBase64)
 	{
 		if (string.IsNullOrWhiteSpace(query)) throw new ArgumentException("搜尋問題不可為空。", nameof(query));
 		EnsureBridgeStarted();
@@ -189,12 +199,10 @@ public sealed class GoogleAiModeSearchService : IDisposable
 				? $"{GetProviderLabel(provider)} 擴充功能已確認送出；目前無法取得視窗控制代碼，仍繼續等待回答。"
 				: $"本次 {GetProviderLabel(provider)} Chrome 視窗保持顯示（不搶焦點、不最小化），等待回答……");
 
-			GoogleAiModeResult result;
-			try { result = await resultSignal.Task.WaitAsync(TimeSpan.FromMinutes(3), cancellationToken); }
-			catch (TimeoutException)
-			{
-				throw new TimeoutException($"等待 {GetProviderLabel(provider)} 回答逾時；搜尋頁面會保留以便檢查。");
-			}
+			// Response generation has no fixed deadline. In particular, do not release
+			// the shared bridge slot while ChatGPT is still generating: the next search
+			// would replace this job and could close its tab. Cancellation is explicit.
+			GoogleAiModeResult result = await resultSignal.Task.WaitAsync(cancellationToken);
 
 			Console.WriteLine($"已讀取 {GetProviderLabel(provider)} 網頁內容；擴充功能只會關閉本次搜尋分頁。");
 			return result;
@@ -367,12 +375,13 @@ public sealed class GoogleAiModeSearchService : IDisposable
 						return;
 					}
 					var message = JsonSerializer.Deserialize<BridgeResult>(body, jsonOptions);
+				bool accepted = false;
 					lock (sync)
 					{
 						if (message is not null && message.JobId == currentJob?.Id && completed is not null)
 						{
 							if (!string.IsNullOrWhiteSpace(message.Error))
-								completed.TrySetException(new InvalidOperationException(message.Error));
+							accepted = completed.TrySetException(new InvalidOperationException(message.Error));
 							else
 							{
 								List<GoogleAiSource> sources = message.Sources ?? new();
@@ -380,11 +389,13 @@ public sealed class GoogleAiModeSearchService : IDisposable
 								string providerLabel = GetProviderLabel(provider);
 								string evidence = $"【{providerLabel} 原始回答】\n{message.Answer}";
 								if (sources.Count > 0) evidence += $"\n\n【{providerLabel} 頁面引用】\n" + string.Join("\n", sources.Select(s => $"{s.Title}\n{s.Url}"));
-								completed.TrySetResult(new GoogleAiModeResult(evidence, sources, message.Answer ?? ""));
+							accepted = completed.TrySetResult(new GoogleAiModeResult(evidence, sources, message.Answer ?? ""));
 							}
 						}
 					}
-					await WriteResponseAsync(stream, 200, "{\"ok\":true}", "application/json; charset=utf-8");
+				await WriteResponseAsync(stream, accepted ? 200 : 404,
+					accepted ? "{\"ok\":true}" : "{\"error\":\"job not active or result already received\"}",
+					"application/json; charset=utf-8");
 					return;
 				}
 

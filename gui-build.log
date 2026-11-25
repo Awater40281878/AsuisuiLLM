@@ -1,0 +1,11 @@
+D:\Git\Asuisui\AsuisuiLLM\DesktopAI.Gui\DesktopAI.Gui.csproj : warning NU1900: 取得套件弱點資料時發生錯誤: 無法載入來源 https://api.nuget.org/v3/index.json 的服務索引。
+  DesktopAI.Core -> D:\Git\Asuisui\AsuisuiLLM\DesktopAI.Core\bin\Debug\net9.0\DesktopAI.Core.dll
+  DesktopAI.Gui -> D:\Git\Asuisui\AsuisuiLLM\DesktopAI.Gui\bin\Debug\net9.0-windows\DesktopAI.Gui.dll
+
+建置成功。
+
+D:\Git\Asuisui\AsuisuiLLM\DesktopAI.Gui\DesktopAI.Gui.csproj : warning NU1900: 取得套件弱點資料時發生錯誤: 無法載入來源 https://api.nuget.org/v3/index.json 的服務索引。
+    1 個警告
+    0 個錯誤
+
+經過時間 00:00:22.59

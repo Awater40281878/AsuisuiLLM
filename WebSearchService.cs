@@ -13,6 +13,7 @@ using Microsoft.Playwright;
 public sealed class WebSearchService
 {
 	private const string SearchEndpoint = "https://duckduckgo.com/?q=";
+	private const string BingSearchEndpoint = "https://www.bing.com/search?q=";
 	private static readonly SemaphoreSlim BrowserLock = new(1, 1);
 	private readonly HttpClient _client;
 
@@ -52,8 +53,11 @@ public sealed class WebSearchService
 				string html = await page.ContentAsync();
 				if (IsNoResults(html)) return results;
 				if (!IsChallenge(html, page.Url))
-					throw new InvalidOperationException(
-						"搜尋頁面沒有可解析的結果，且未偵測到 CAPTCHA。可能是 DuckDuckGo 頁面結構改變。");
+				{
+					var fallback = await SearchBingAsync(page, query, maxResults, cancellationToken);
+					if (fallback.Count > 0) return fallback;
+					throw new InvalidOperationException("DuckDuckGo 與備援搜尋頁都沒有可解析的結果。");
+				}
 
 				Console.WriteLine("DuckDuckGo 出現驗證頁，背景 Chrome 等待自動完成……");
 				// 某些 JavaScript 驗證會自行跳轉。保留同一個 page / cookie 等待它完成。
@@ -71,8 +75,12 @@ public sealed class WebSearchService
 				html = await page.ContentAsync();
 				if (IsNoResults(html)) return results;
 				if (IsChallenge(html, page.Url))
-					throw new InvalidOperationException(
-						"DuckDuckGo 仍要求人機驗證；背景 Chrome 無法自動完成，已停止且未影響使用者視窗。");
+				{
+					Console.WriteLine("DuckDuckGo 驗證未解除，切換至 Bing 備援搜尋……");
+					var fallback = await SearchBingAsync(page, query, maxResults, cancellationToken);
+					if (fallback.Count > 0) return fallback;
+					throw new InvalidOperationException("DuckDuckGo 要求人機驗證，且 Bing 備援搜尋未取得可解析結果。");
+				}
 				throw new InvalidOperationException("重試後仍無法解析 DuckDuckGo 搜尋結果。");
 			}
 		}
@@ -85,6 +93,20 @@ public sealed class WebSearchService
 		{
 			BrowserLock.Release();
 		}
+	}
+
+	private static async Task<List<SearchResult>> SearchBingAsync(IPage page, string query, int maxResults, CancellationToken cancellationToken)
+	{
+		await NavigateAsync(page, BingSearchEndpoint + Uri.EscapeDataString(query));
+		DateTime deadline = DateTime.UtcNow.AddSeconds(10);
+		while (DateTime.UtcNow < deadline)
+		{
+			cancellationToken.ThrowIfCancellationRequested();
+			var results = ParseBingResults(await page.ContentAsync(), maxResults);
+			if (results.Count > 0) return results;
+			await Task.Delay(600, cancellationToken);
+		}
+		return new List<SearchResult>();
 	}
 
 	private static Task<IBrowserContext> OpenBrowserAsync(
@@ -171,6 +193,25 @@ public sealed class WebSearchService
 				Content = CleanText(snippet?.InnerText ?? ""),
 				Engine = "duckduckgo"
 			});
+			if (results.Count >= maxResults) break;
+		}
+		return results;
+	}
+
+	private static List<SearchResult> ParseBingResults(string html, int maxResults)
+	{
+		var document = new HtmlDocument();
+		document.LoadHtml(html);
+		var anchors = document.DocumentNode.SelectNodes("//li[@class='b_algo']//h2/a|//ol[@id='b_results']//h2/a");
+		var results = new List<SearchResult>();
+		var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+		foreach (var anchor in anchors ?? Enumerable.Empty<HtmlNode>())
+		{
+			string target = WebUtility.HtmlDecode(anchor.GetAttributeValue("href", ""));
+			string title = CleanText(anchor.InnerText);
+			if (title.Length == 0 || !IsHttpUrl(target) || !seen.Add(target)) continue;
+			var container = anchor.Ancestors("li").FirstOrDefault(node => node.GetAttributeValue("class", "").Contains("b_algo", StringComparison.Ordinal));
+			results.Add(new SearchResult { Title = title, Url = target, Content = CleanText(container?.InnerText ?? ""), Engine = "bing" });
 			if (results.Count >= maxResults) break;
 		}
 		return results;
